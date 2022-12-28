@@ -90,8 +90,12 @@ int getGreatestLength(vs v) {
   return rc;
 }
 
+std::string oneOrMore(ul n) {
+  return n == 1 ? "" : "s";
+}
+
 std::string formatMicroSeconds(const ul tms, int p, bool verbose) {
-  const double kd(1000000);
+  const double kd(1000000.0);
   double seconds(tms / kd);
   ul minutes(seconds / 60);
   ul secs(seconds - minutes * 60);
@@ -102,45 +106,44 @@ std::string formatMicroSeconds(const ul tms, int p, bool verbose) {
   std::stringstream sst;
   sst.precision(p);
   sst << std::setfill(' ');
+  sst << std::fixed;
 
   if (verbose) {
     if (hours) {
-      sst << hours << " hours ";
+      sst << hours << " hour" << oneOrMore(hours);
     }
     if (minutes) {
-      sst << minutes << " minutes ";
+      sst << (hours ? " " : "") << minutes << " minutes";
     }
     if (seconds) {
-      sst << (hours || minutes ? ", and " : "") << seconds << " seconds ";
+      sst << (hours || minutes ? ", and " : "") << seconds << " second" << oneOrMore(secs);
     }
     return sst.str();
-  } else {
-
-    if (hours > 0)
-      sst << (hours > 99 ? "  " : hours > 9 ? "   " : "    " ) << hours << ":";
-    else
-      sst << "    ";
-
-    sst << std::setfill('0');
-    if (minutes > 0 || hours > 0)
-      sst << (hours > 0 ? "" : minutes > 9 ? "  " : "   ") << std::fixed
-        << std::setw(minutes > 9 || hours > 0 ? 2 : 1)
-        << minutes << ":";
-
-    sst << (hours == 0 && minutes == 0 && secs < 10 ? "      " : hours == 0 && minutes == 0 ? "     " : "")
-      << std::fixed
-      << std::setw((hours > 0 || minutes > 0) && secs < 10 ? 1 : 0)
-      << ((hours > 0 || minutes > 0) && secs < 10 ? "0" : "")
-      << seconds;
-
   }
+
+  if (hours)
+    sst << (hours > 99 ? "  " : hours > 9 ? "   " : "    " ) << hours << ":";
+  else
+    sst << "    ";
+
+  sst << std::setfill('0');
+  if (minutes || hours)
+    sst << (hours > 0 ? "" : minutes > 9 ? "  " : "   ")
+      << std::setw(minutes > 9 || hours > 0 ? 2 : 1)
+      << minutes << ":";
+
+  sst << (hours && minutes && secs < 10 ? "      " : hours && minutes ? "     " : "")
+    << std::setw((hours > 0 || minutes > 0) && secs < 10 ? 1 : 0)
+    << ((hours > 0 || minutes > 0) && secs < 10 ? "0" : "")
+    << seconds;
+
   return sst.str();
 }
 
 std::string formatTime (bool doDate, bool doTime) {
   time_t rawtime;
   struct tm *timeinfo;
-  char buffer[80];
+  char buffer[256];
 
   time (&rawtime);
   timeinfo = localtime (&rawtime);
@@ -171,14 +174,15 @@ std::string gaps2string(vul gaps, std::string delimiter) {
   return oString;
 }
 
-static void minFillGaps(vul &gaps, ul vSize) {
+void minFillGaps(vul &gaps, ul vSize) {
   gaps.clear();
-  gaps.push_back(vSize >> 1);
-  gaps.push_back(vSize >> 2);
-  gaps.push_back(1);
+  gaps.push_back((vSize - (vSize >> 2)) | 1);
+  while(gaps.back() > 1) {
+    gaps.push_back((gaps.back() >> 1) | 1);
+  };
 }
 
-static void inspectGaps(vul &gaps, const ul vSize) {
+void inspectGaps(vul &gaps, const ul vSize) {
   if (gaps.empty()) {
     std::cerr << " \tGap error. Empty.\n";
     minFillGaps(gaps, vSize);
@@ -203,7 +207,7 @@ static void inspectGaps(vul &gaps, const ul vSize) {
   gaps.shrink_to_fit();
 }
 
-static void writeDistros(m_s_ds dMap) {
+void writeDistros(m_s_ds dMap) {
   //    for (auto &d0 : dMap) {
   if (dMap.empty()) {
     std::cerr << formatTime(true, true) << " \tdMap error. Empty.";
@@ -237,7 +241,7 @@ static void writeDistros(m_s_ds dMap) {
   std::cerr << formatTime(true, true) << " \tWrite distros ends.\n";
 }
 
-static void writeGaps(m_s_gs gMap) {
+void writeGaps(m_s_gs gMap) {
   std::cerr << formatTime(true, true) << " \tWrite gaps begins.\n";
   std::fstream gst;
   std::string fnBase(FN_Base + formatTime(true, true));
@@ -254,7 +258,7 @@ static void writeGaps(m_s_gs gMap) {
   std::cerr << formatTime(true, true) << " \tWrite gaps ends.\n";
 }
 
-static void prepG1(m_s_gs &gMap, vul sizes) {
+void prepG1(m_s_gs &gMap, vul sizes) {
   for (auto &g0 : gMap) {
     for (auto dName : DISTRO_NAMES) {
       for (auto size : sizes) {
@@ -264,7 +268,7 @@ static void prepG1(m_s_gs &gMap, vul sizes) {
   }
 }
 
-static void makeGapSequences(m_s_gs &gMap) {
+void makeGapSequences(m_s_gs &gMap) {
   for (auto &g0 : gMap) {
     for (auto &g1 : g0.second.results) {
       g1.second.gaps.clear();
@@ -274,26 +278,19 @@ static void makeGapSequences(m_s_gs &gMap) {
   }
 }
 
-static void make_gMap(m_s_gs &gMap, vul sizes) {
-  gMap["1959 Shell"].gapFn = shell;
-  gMap["1960 Frank & Lazarus"].gapFn = frank;
-  gMap["1963 Hibbard"].gapFn = hibbard;
-  gMap["1965 Papernov & Stasevich"].gapFn = papernov;
-  gMap["1971 Pratt"].gapFn = pratt;
+void make_gMap(m_s_gs &gMap, vul sizes) {
+  // gMap["1959 Shell"].gapFn = shell;
+  // gMap["1960 Frank & Lazarus"].gapFn = frank;
+  // gMap["1963 Hibbard"].gapFn = hibbard;
+  // gMap["1965 Papernov & Stasevich"].gapFn = papernov;
+  // gMap["1971 Pratt"].gapFn = pratt;
   gMap["1973 Knuth"].gapFn = knuth;
   gMap["1982 Sedgewick"].gapFn = sedgewick82;
   gMap["1986 Sedgewick"].gapFn = sedgewick86;
   gMap["1991 Gonnet & Baeza-Yates"].gapFn = gonnet;
   gMap["1992 Tokuda"].gapFn = tokuda;
   gMap["2001 Ciura"].gapFn = ciura;
-  // gMap["System"].gapFn = sys;
-  // gMap["2022 a"].gapFn = a;
-  // gMap["2022 b"].gapFn = b;
   gMap["2022 Phil"].gapFn = phil;
-  // gMap["2022 d"].gapFn = d;
-  // gMap["2022 e"].gapFn = e;
-  // gMap["2022 f"].gapFn = e;
-  // gMap["2022 g"].gapFn = e;
 
   prepG1(gMap, sizes);
 
@@ -310,9 +307,10 @@ static void make_gMap(m_s_gs &gMap, vul sizes) {
   std::cerr << formatTime(true, true) << " \tgMap built " << gMap.size() << " gappers running.\n";
 }
 
-static void make_dMap(m_s_ds &dMap, const vul sizes) {
+void make_dMap(m_s_ds &dMap, const vul sizes) {
   std::cerr << formatTime(true, true)
-    << " \tBuilding dMap for " << DISTRO_NAMES.size() << " distributions each with " << sizes.size() << " samples,"
+    << " \tBuilding dMap for " << DISTRO_NAMES.size() << " distribution" << oneOrMore(DISTRO_NAMES.size()) 
+    << " each with " << sizes.size() << " sample" << oneOrMore(sizes.size()) <<  ","
     << " large samples using complicated distributions will take time."
     << '\n';
 
@@ -329,7 +327,7 @@ static void make_dMap(m_s_ds &dMap, const vul sizes) {
   std::cerr << formatTime(true, true) << " \tdMap built.\n";
 }
 
-static void errorFunction(vi &wc, vi &cc) {
+void errorFunction(vi &wc, vi &cc) {
   int n(0), w(28), maxLines(24);
 
   auto itw(wc.begin());
@@ -344,7 +342,7 @@ static void errorFunction(vi &wc, vi &cc) {
       << std::right << std::setw(w) << *itw++ << '\n';
 }
 
-static void writeTimes(m_s_gs gMap, m_s_ds dMap) {
+void writeTimes(m_s_gs gMap, m_s_ds dMap) {
   if (FULL_Run) {
     std::fstream fst;
     std::string fileName(FN_Base + formatTime(true, true));
@@ -366,7 +364,7 @@ static void writeTimes(m_s_gs gMap, m_s_ds dMap) {
   }
 }
 
-static void summerize(m_s_ds &dMap, m_s_gs gMap) {
+void summerize(m_s_ds &dMap, m_s_gs gMap) {
   for (auto &d0 : dMap) {
     for (auto &d1 : d0.second.originals) {
       auto firstTime(true);
@@ -381,7 +379,7 @@ static void summerize(m_s_ds &dMap, m_s_gs gMap) {
         std::cout
           << std::right << std::setw(FORMATTED_MicroSecondLength) << formatMicroSeconds(result.time, 3)
           << std::right << std::setw(GAPPER_Length) << result.gapper
-          << " Gaps: " << gaps2string(gMap[result.gapper].results[d1.first].gaps, " ")
+          << " Gaps:" << gaps2string(gMap[result.gapper].results[d1.first].gaps, " ")
           << '\n';
       }
     }
@@ -404,12 +402,12 @@ void listWinners(m_s_ds &dMap) {
   }
 }
 
-static void eoj(m_s_gs gMap, m_s_ds dMap) {
+void eoj(m_s_gs gMap, m_s_ds dMap) {
   summerize(dMap, gMap);
   listWinners(dMap);
 }
 
-static void doSort(std::pair<const std::string, distroStruct> &d0, std::pair<const unsigned long,originalSample> &d1,
+void doSort(std::pair<const std::string, distroStruct> &d0, std::pair<const unsigned long,originalSample> &d1,
                    std::pair<const std::string, gs> &g0, vul &gTimes, const ul size, vi checkCopy) {
   for (auto &g1 : g0.second.results ) {
     if (g1.first == d1.first) {
@@ -444,7 +442,7 @@ static void doSort(std::pair<const std::string, distroStruct> &d0, std::pair<con
   }
 }
 
-static void checkForLagards(vtg results, m_s_gs &gMap, const vul &gTimes, ul warnLimit) {
+void checkForLagards(vtg results, m_s_gs &gMap, const vul &gTimes, ul warnLimit) {
   auto kudo(average(gTimes));
   auto limt(kudo + (kudo >> 2));
   for (auto result : results) {
@@ -462,7 +460,7 @@ static void checkForLagards(vtg results, m_s_gs &gMap, const vul &gTimes, ul war
   }
 }
 
-static void work(m_s_gs &gMap, m_s_ds &dMap) {
+void work(m_s_gs &gMap, m_s_ds &dMap) {
   auto warnLimit(SIZES.size() - 1 < MAX_Warnings ? MAX_Warnings : SIZES.size() - 1);
   for (auto &d0 : dMap) { // each distro
     for (auto &d1 : d0.second.originals) {   // each sample
@@ -512,7 +510,7 @@ void init() {
     auto t1(system_clock::now());
     auto durT = duration_cast<microseconds>(t1 - t0).count();
     std::cerr << formatTime(true, true) << " \tInitialization complete. Required "
-      << formatMicroSeconds(durT,1) << " seconds.\n";
+      << formatMicroSeconds(durT,1,true) << ".\n";
 
     if (dMap.empty()) {
       std::cerr << formatTime(true, true) << " \tdMap uninitalized.";
@@ -754,7 +752,7 @@ void randomFill(ul n, vi &v, std::string distroName) {
   v.shrink_to_fit();
 }
 
-static void gap22(vul &gaps, ul vSize, int bits, vi sri, vi srj) {
+void gap22(vul &gaps, ul vSize, int bits, vi sri, vi srj) {
   bits = bits < 1 ? 1 : bits > 6 ? 6 : bits;
   auto ladd(1);
   while (--bits > 0) {
