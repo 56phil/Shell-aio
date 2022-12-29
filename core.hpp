@@ -77,7 +77,7 @@ const vul SIZES({
                   // 1000000,
                   // 10000000,
                   100000000,
-                  // 1000000000,
+                  1000000000,
                 });
 
 struct my_numpunct : std::numpunct<char> {

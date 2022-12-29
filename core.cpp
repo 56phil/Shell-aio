@@ -113,7 +113,7 @@ std::string formatMicroSeconds(const ul tms, int p, bool verbose) {
       sst << hours << " hour" << oneOrMore(hours);
     }
     if (minutes) {
-      sst << (hours ? " " : "") << minutes << " minutes";
+      sst << (hours ? " " : "") << minutes << " minute" << oneOrMore(minutes);
     }
     if (seconds) {
       sst << (hours || minutes ? ", and " : "") << seconds << " second" << oneOrMore(secs);
