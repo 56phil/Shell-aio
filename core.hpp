@@ -10,12 +10,12 @@
 
 #include <algorithm>
 #include <chrono>
-#include <iostream>
-#include <iomanip>
 #include <fstream>
 #include <functional>
-#include <locale>
+#include <iomanip>
+#include <iostream>
 #include <list>
+#include <locale>
 #include <map>
 #include <random>
 #include <set>
@@ -23,11 +23,10 @@
 #include <vector>
 
 #define VALUE_ERROR 4
-#define VECTOR_EMPTY 3 
-#define DMAP_EMPTY 2 
-#define GMAP_EMPTY 1 
+#define VECTOR_EMPTY 3
+#define DMAP_EMPTY 2
+#define GMAP_EMPTY 1
 #define OK 0
-
 
 typedef unsigned long ul;
 typedef unsigned long long ull;
@@ -40,15 +39,15 @@ typedef std::vector<std::string> vs;
 
 using namespace std::chrono;
 
-int main (int, char **);
-std::string formatMicroSeconds(const ul , int , bool verbose=false );
-std::string formatTime (bool doDate=false, bool doTime=true);
+int main(int, char **);
+std::string formatMicroSeconds(const ul, int, bool verbose = false);
+std::string formatTime(bool doDate = false, bool doTime = true);
 void init();
 void randomFill(ul, vi &, std::string);
 void sys(vul &, ul);
 
 const bool FULL_Run(true);
-const bool WARN_Lagards(false);
+const bool WARN_Lagards(true);
 const int FORMATTED_MicroSecondLength(10);
 const int GAPPER_Length(29);
 const int MAX_DistroLines(150);
@@ -62,37 +61,37 @@ const std::string FN_Base("/Users/prh/Keepers/code/cpp/shellSort/results/");
 const ul MAX_SampleSize(1000000000);
 const ul MIN_SampleSize(100000);
 const vs DISTRO_NAMES({
-                        "Bernoulli",
-                        // "Binomial",
-                        // "Gamma",
-                        // "Geometric",
-                        // "Normal",
-                        // "Poisson",
-                        "Uniform",
-                        // "Uniform - Sorted",
-                        // "Uniform - Sorted & Reversed",
-                      });
+    "Bernoulli",
+    // "Binomial",
+    // "Gamma",
+    // "Geometric",
+    // "Normal",
+    // "Poisson",
+    "Uniform",
+    // "Uniform - Sorted",
+    // "Uniform - Sorted & Reversed",
+});
 const vul SIZES({
-                  // 100000,
-                  // 1000000,
-                  // 10000000,
-                  100000000,
-                  1000000000,
-                });
+    // 100000,
+    // 1000000,
+    10000000,
+    100000000,
+    1000000000,
+});
 
 struct my_numpunct : std::numpunct<char> {
-  std::string do_grouping() const {return "\03";}
+  std::string do_grouping() const { return "\03"; }
 };
 
 struct distroData {
   ul time;
 };
-typedef std::map<std::string,distroData> m_s_dd;
+typedef std::map<std::string, distroData> m_s_dd;
 
 struct runData {
   vul gaps;
 };
-typedef std::map<ul,runData> m_ul_rd;
+typedef std::map<ul, runData> m_ul_rd;
 
 struct gs {
   int warnings;
@@ -104,14 +103,14 @@ struct gs {
   std::function<void(vul &, ul)> gapFn;
   m_ul_rd results;
 };
-typedef std::map<std::string,gs> m_s_gs;
+typedef std::map<std::string, gs> m_s_gs;
 
 struct topGapper {
   std::string gapper;
   ul time;
   topGapper(ul time, std::string gapper) {
-    this -> time = time;
-    this -> gapper = gapper;
+    this->time = time;
+    this->gapper = gapper;
   }
 };
 typedef topGapper tg;
@@ -121,12 +120,12 @@ struct originalSample {
   vi sample;
   vtg results;
 };
-typedef std::map<ul,originalSample> m_ul_os;
+typedef std::map<ul, originalSample> m_ul_os;
 
 struct distroStruct {
   m_ul_os originals;
 };
-typedef std::map<std::string,distroStruct> m_s_ds;
+typedef std::map<std::string, distroStruct> m_s_ds;
 
 void ciura(vul &, ul);
 void frank(vul &, ul);
