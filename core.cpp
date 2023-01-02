@@ -6,6 +6,7 @@
 
 #include "core.hpp"
 #include <iostream>
+#include <string>
 
 int main(int argc, char **) {
   std::locale loc(std::cout.getloc(), new my_numpunct);
@@ -19,35 +20,45 @@ int main(int argc, char **) {
 template <typename T> T median(std::vector<T> a) {
   // returns median of a vector
   if (a.empty()) {
-    std::cerr << formatTime(true, true) << " \tMedian error. Empty.";
+    logError("Median error. Empty.");
     exit(VECTOR_EMPTY);
   }
 
   // clangd incorrectly flags the below as an error.
   if (!std::is_arithmetic_v<T>) {
-    std::cerr << formatTime(true, true)
-              << " \tMedian error. Vector type not arithmetic.";
+    logError("Median error. Vector type not arithmetic.");
     exit(VALUE_ERROR);
   }
 
   std::sort(a.begin(), a.end());
-  if (a.size() & 1) {
-    auto it(a.begin() + a.size() / 2);
+  auto mp = a.size() / 2;
+  auto it(a.begin() + mp);
+
+  if (a.size() & 1)
     return *it;
-  }
-  auto it(a.begin() + a.size() / 2);
+
   return ((*it + *(it - 1)) / 2);
 }
 
 template <typename T> T average(const std::vector<T> a) {
   // returns mean of a vector
-  if (a.empty())
+
+  if (a.empty()) {
+    logError("Median error. empty vector");
     exit(VECTOR_EMPTY);
+  }
+
+  // clangd incorrectly flags the below as an error.
+  if (!std::is_arithmetic_v<T>) {
+    logError("Median error. Vector type not numeric.");
+    exit(VALUE_ERROR);
+  }
+
   return std::accumulate(a.begin(), a.end(), 0) / a.size();
 }
 
 template <typename T> void shellSort(std::vector<T> &v, const vul &gaps) {
-  // sorts a vector using Shell's method with a gap sequence
+  // sorts a vector using Shell's method with provided gap sequence
   for (auto gap : gaps) {
     for (auto iti(v.begin() + gap); iti != v.end(); iti++) {
       auto tmp(*iti);
@@ -59,20 +70,36 @@ template <typename T> void shellSort(std::vector<T> &v, const vul &gaps) {
   }
 }
 
-int getGreatestLength(const vs &v) {
-  // returns length of longest string in vector
-  int rc(0);
-
-  for (auto s : v) {
-    rc = rc < s.size() ? s.size() : rc;
-  }
-
-  return rc;
+void logError(std::string msg) {
+  std::cerr << formatTime(true, true) << " \t" << msg << '\n';
 }
 
-std::string oneOrMore(ul n) { return n == 1 ? "" : "s"; }
+int getGreatestLength(const vs &v, int &width) {
+  // returns length of longest string in vector
+  width = 0;
 
-std::string formatMicroSeconds(const ul tms, int p, bool verbose) {
+  for (auto s : v) {
+    width = width < s.size() ? s.size() : width;
+  }
+}
+
+void trim(std::string &s) {
+  auto fit(s.begin());
+  auto rit(s.begin() + s.size() - 1);
+  while (*fit == ' ') {
+    fit++;
+  }
+  while (*rit == ' ') {
+    rit--;
+  }
+  std::string rv(fit, rit);
+  s = rv;
+}
+
+std::string zeroOrMany(ul n) { return n == 1 ? "" : "s"; }
+
+std::string formatMicroSeconds(const ul tms, int p, bool verbose,
+                               bool compresed) {
   // makes microseconds readable
   const double kd(1000000.0);
   double seconds(tms / kd);
@@ -89,14 +116,14 @@ std::string formatMicroSeconds(const ul tms, int p, bool verbose) {
 
   if (verbose) {
     if (hours) {
-      sst << hours << " hour" << oneOrMore(hours);
+      sst << hours << " hour" << zeroOrMany(hours);
     }
     if (minutes) {
-      sst << (hours ? " " : "") << minutes << " minute" << oneOrMore(minutes);
+      sst << (hours ? " " : "") << minutes << " minute" << zeroOrMany(minutes);
     }
     if (seconds) {
       sst << (hours || minutes ? ", and " : "") << seconds << " second"
-          << oneOrMore(secs);
+          << zeroOrMany(secs);
     }
     return sst.str();
   }
@@ -118,8 +145,18 @@ std::string formatMicroSeconds(const ul tms, int p, bool verbose) {
                                         : "")
       << std::setw((hours > 0 || minutes > 0) && secs < 10 ? 1 : 0)
       << ((hours > 0 || minutes > 0) && secs < 10 ? "0" : "") << seconds;
-
-  return sst.str();
+  std::string str(sst.str());
+  if (compresed) {
+    trim(str);
+    // auto itt(str.begin());
+    // while (*itt == ' ') {
+    //   itt++;
+    // }
+    // std::string tmp(itt, str.end());
+    // str = tmp;
+    // str.erase(remove_if(str.begin(), str.end(), isspace));
+  }
+  return str;
 }
 
 std::string formatTime(bool doDate, bool doTime) {
@@ -170,7 +207,7 @@ void minFillGaps(vul &gaps, ul vSize) {
 void inspectGaps(vul &gaps, const ul vSize) {
   // check vector for readiness for use by shellSort function
   if (gaps.empty()) {
-    std::cerr << " \tGap error. Empty.\n";
+    logError("Gap error. Empty.");
     minFillGaps(gaps, vSize);
   }
 
@@ -185,7 +222,7 @@ void inspectGaps(vul &gaps, const ul vSize) {
 
   for (auto it(gaps.begin() + 1); it != gaps.end(); it++) {
     if (*(it - 1) <= *it) {
-      std::cerr << " \tGap Error. Sequence.\n";
+      logError("Gap Error. Sequence.");
       minFillGaps(gaps, vSize);
     }
   }
@@ -196,21 +233,23 @@ void inspectGaps(vul &gaps, const ul vSize) {
 void writeDistros(const m_s_ds &dMap) {
   // dMap to CSV
   if (dMap.empty()) {
-    std::cerr << formatTime(true, true) << " \tdMap error. Empty.";
+    logError("dMap error. Empty.");
     exit(DMAP_EMPTY);
   }
 
-  std::map<std::string, vi> mit;
-  for (auto d0 : dMap) {
-    mit[d0.first] = d0.second.originals.begin()->second.sample;
-  }
-  std::cerr << formatTime(true, true) << " \tWrite distros begins.\n";
+  logError("Write distros begins.");
   long maxPossibleLines(
       dMap.begin()
           ->second.originals.begin()
           ->first); // size of the first (smallest) sample vector
   long maxDistroLines(MAX_DistroLines < maxPossibleLines ? MAX_DistroLines
                                                          : maxPossibleLines);
+  std::map<std::string, vi> mit;
+  for (auto d0 : dMap) {
+    vi tmp(d0.second.originals.begin()->second.sample.begin(),
+           d0.second.originals.begin()->second.sample.begin() + maxDistroLines);
+    mit[d0.first] = tmp;
+  }
   std::string fnBase(FN_Base);
   fnBase += formatTime(true, true);
   fnBase += "-distros.csv";
@@ -228,12 +267,12 @@ void writeDistros(const m_s_ds &dMap) {
   }
   fst << std::endl;
   fst.close();
-  std::cerr << formatTime(true, true) << " \tWrite distros ends.\n";
+  logError("Write distros ends.");
 }
 
 void writeGaps(const m_s_gs &gMap) {
   // gMap to CSV
-  std::cerr << formatTime(true, true) << " \tWrite gaps begins.\n";
+  logError("Write gaps begins.");
   std::fstream gst;
   std::string fnBase(FN_Base + formatTime(true, true));
   fnBase += "-Gaps.csv";
@@ -247,7 +286,7 @@ void writeGaps(const m_s_gs &gMap) {
   }
   gst << std::endl;
   gst.close();
-  std::cerr << formatTime(true, true) << " \tWrite gaps ends.\n";
+  logError("Write gaps ends.");
 }
 
 void prepG1(m_s_gs &gMap, const vul &sizes) {
@@ -279,9 +318,9 @@ void make_gMap(m_s_gs &gMap, const vul &sizes) {
   // gMap["1963 Hibbard"].gapFn = hibbard;
   // gMap["1965 Papernov & Stasevich"].gapFn = papernov;
   // gMap["1971 Pratt"].gapFn = pratt;
-  gMap["1973 Knuth"].gapFn = knuth;
+  // gMap["1973 Knuth"].gapFn = knuth;
   // gMap["1982 Sedgewick"].gapFn = sedgewick82;
-  gMap["1986 Sedgewick"].gapFn = sedgewick86;
+  // gMap["1986 Sedgewick"].gapFn = sedgewick86;
   gMap["1991 Gonnet & Baeza-Yates"].gapFn = gonnet;
   gMap["1992 Tokuda"].gapFn = tokuda;
   gMap["2001 Ciura"].gapFn = ciura;
@@ -300,7 +339,7 @@ void make_gMap(m_s_gs &gMap, const vul &sizes) {
   makeGapSequences(gMap);
   writeGaps(gMap);
   std::cerr << formatTime(true, true) << " \tgMap built. Running "
-            << gMap.size() << " gapper" << oneOrMore(gMap.size()) << ".\n";
+            << gMap.size() << " gapper" << zeroOrMany(gMap.size()) << ".\n";
 }
 
 void make_dMap(m_s_ds &dMap, const vul &sizes) {
@@ -308,24 +347,24 @@ void make_dMap(m_s_ds &dMap, const vul &sizes) {
   // ensure it is passed by reference!
   std::cerr << formatTime(true, true) << " \tBuilding dMap for "
             << DISTRO_NAMES.size() << " distribution"
-            << oneOrMore(DISTRO_NAMES.size()) << " each with " << sizes.size()
-            << " sample" << oneOrMore(sizes.size()) << ","
+            << zeroOrMany(DISTRO_NAMES.size()) << " each with " << sizes.size()
+            << " sample" << zeroOrMany(sizes.size()) << ","
             << " large samples using complicated distributions will take time."
             << '\n';
 
-  auto maxDistroNameLength(getGreatestLength(DISTRO_NAMES));
-  std::cerr << std::setfill('.');
+  int maxDistroNamelength;
+  getGreatestLength(DISTRO_NAMES, maxDistroNamelength);
   for (auto dName : DISTRO_NAMES) {
     for (auto size : sizes) {
       dMap[dName].originals[size].sample.clear();
       randomFill(size, dMap[dName].originals[size].sample, dName);
     }
     std::cerr << formatTime(true, true) << " \t" << std::left
-              << std::setw(maxDistroNameLength) << dName
+              << std::setw(maxDistroNamelength) << dName
               << " distribution samples built.\n";
   }
   writeDistros(dMap);
-  std::cerr << formatTime(true, true) << " \tdMap built.\n";
+  logError("dMap built.");
 }
 
 void errorFunction(const vi &wc, const vi &cc) {
@@ -347,7 +386,7 @@ void errorFunction(const vi &wc, const vi &cc) {
   }
 }
 
-void writeTimes(m_s_gs gMap, m_s_ds dMap) {
+void writeTimes(m_s_ds dMap) {
   // sort times to CSV
   if (FULL_Run) {
     std::fstream fst;
@@ -412,7 +451,7 @@ void listWinners(m_s_ds &dMap) {
 
 void eoj(m_s_gs &gMap, m_s_ds &dMap) {
   // end of job logic goes here
-  writeTimes(gMap, dMap);
+  writeTimes(dMap);
   summerize(dMap, gMap);
   listWinners(dMap);
 }
@@ -445,8 +484,9 @@ void doSort(std::pair<const std::string, distroStruct> &d0,
       }
       auto dur(times.size() == 1 ? times.front() : median(times));
       std::cout << formatTime(true, true) << std::right
-                << std::setw(MICROSECOND_Length) << dur << "µs " << std::right
-                << std::setw(FORMATTED_MicroSecondLength)
+                << std::setw(MICROSECOND_Length) << dur << "µs "
+                << std::right
+                // << std::setw(FORMATTED_MicroSecondLength)
                 << formatMicroSeconds(dur, 3) << " \t" << g0.first << '\n';
 
       d1.second.results.push_back(tg(dur, g0.first));
@@ -508,49 +548,58 @@ void work(m_s_gs &gMap, m_s_ds &dMap) {
                 << d1.second.results.front().gapper << '\n';
     }
   }
-  eoj(gMap, dMap);
+}
+
+void clearResults(m_s_ds &dMap, m_s_gs &gMap) {
+  for (auto &d0 : dMap) {
+    for (auto &d1 : d0.second.originals) {
+      d1.second.results.clear();
+    }
+  }
+  for (auto &g0 : gMap) {
+    g0.second.warnings = 0;
+  }
 }
 
 void init() {
   // initialization function sets up dMap & gMap for sorting
+  auto t0(system_clock::now());
+  std::cerr << formatTime(true, true) << " \tInitialization begins."
+            << " \tSample size for median measurement: " << MEDIAN_TrialSize
+            << "\n";
+  auto sizes(SIZES);
+  for (auto &size : sizes) {
+    size = size > MAX_SAMPLE_SIZE   ? MAX_SAMPLE_SIZE
+           : size < MIN_SAMPLE_SIZE ? MIN_SAMPLE_SIZE
+                                    : size;
+  }
+
+  // sizes must be unique because it is used as an index in both dMap & gMap.
+  std::sort(sizes.begin(), sizes.end());
+  sizes.erase(std::unique(sizes.begin(), sizes.end()),
+              sizes.end()); // ensure sizes are unique
+
+  m_s_ds dMap;
+  m_s_gs gMap;
+
+  make_dMap(dMap, sizes);
+  make_gMap(gMap, sizes);
+  auto t1(system_clock::now());
+  auto durT = duration_cast<microseconds>(t1 - t0).count();
+  std::cerr << formatTime(true, true) << " \tInitialization complete. Required "
+            << formatMicroSeconds(durT, 1, true) << ".\n";
+
+  if (dMap.empty()) {
+    logError("dMap uninitalized.");
+    exit(DMAP_EMPTY);
+  }
+
+  if (gMap.empty()) {
+    logError("gMap uninitalized.");
+    exit(GMAP_EMPTY);
+  }
+
   for (int passes(0); passes < MAX_Passes; passes++) {
-    auto t0(system_clock::now());
-    std::cerr << formatTime(true, true) << " \tInitialization begins."
-              << " \tSample size for median measurement: " << MEDIAN_TrialSize
-              << "\n";
-    auto sizes(SIZES);
-    for (auto &size : sizes) {
-      size = size > MAX_SAMPLE_SIZE   ? MAX_SAMPLE_SIZE
-             : size < MIN_SAMPLE_SIZE ? MIN_SAMPLE_SIZE
-                                      : size;
-    }
-
-    // sizes must be unique because it is used as an index in both dMap & gMap.
-    std::sort(sizes.begin(), sizes.end());
-    sizes.erase(std::unique(sizes.begin(), sizes.end()),
-                sizes.end()); // ensure sizes are unique
-
-    m_s_ds dMap;
-    m_s_gs gMap;
-
-    make_dMap(dMap, sizes);
-    make_gMap(gMap, sizes);
-    auto t1(system_clock::now());
-    auto durT = duration_cast<microseconds>(t1 - t0).count();
-    std::cerr << formatTime(true, true)
-              << " \tInitialization complete. Required "
-              << formatMicroSeconds(durT, 1, true) << ".\n";
-
-    if (dMap.empty()) {
-      std::cerr << formatTime(true, true) << " \tdMap uninitalized.";
-      exit(DMAP_EMPTY);
-    }
-
-    if (gMap.empty()) {
-      std::cerr << formatTime(true, true) << " \tgMap uninitalized.";
-      exit(GMAP_EMPTY);
-    }
-
     if (FULL_Run)
       work(gMap, dMap);
 
@@ -558,7 +607,9 @@ void init() {
     auto durE = duration_cast<microseconds>(t2 - t1).count();
     std::cerr << formatTime(true, true) << " \tPass complete. Required "
               << formatMicroSeconds(durE, 1, true) << ".\n";
+    clearResults(dMap, gMap);
   }
+  eoj(gMap, dMap);
 }
 
 // ===== gap sequence generator functions that go into gMap ===========
@@ -606,13 +657,6 @@ bool is3smooth(ul n) {
 void pratt(vul &gaps, ul vSize) {
   gaps.clear();
   for (ul n(1); n < vSize; n++)
-    if (is3smooth(n))
-      gaps.push_back(n);
-}
-
-void pratt_A(vul &gaps, ul vSize) {
-  gaps.clear();
-  for (ul n(1); n < vSize / 2; n += 4)
     if (is3smooth(n))
       gaps.push_back(n);
 }

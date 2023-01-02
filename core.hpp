@@ -40,7 +40,8 @@ typedef std::vector<std::string> vs;
 using namespace std::chrono;
 
 int main(int, char **);
-std::string formatMicroSeconds(const ul, int, bool verbose = false);
+std::string formatMicroSeconds(const ul, int, bool verbose = false,
+                               bool compresed = true);
 std::string formatTime(bool doDate = false, bool doTime = true);
 void init();
 void randomFill(ul, vi &, std::string);
@@ -52,7 +53,7 @@ const int FORMATTED_MicroSecondLength(10);
 const int GAPPER_Length(29);
 const int MAX_DistroLines(15);
 const int MAX_ERROR_LINES(15);
-const int MAX_Passes(1);
+const int MAX_Passes(3);
 const int MAX_Warnings(4);
 const int MEDIAN_TrialSize(1);
 const int MICROSECOND_Length(13);
@@ -62,21 +63,21 @@ const std::string FN_Base("/Users/prh/Keepers/code/cpp/shellSort/results/");
 const ul MAX_SAMPLE_SIZE(1000000000);
 const ul MIN_SAMPLE_SIZE(100000);
 const vs DISTRO_NAMES({
-    "Bernoulli",
-    "Binomial",
-    "Gamma",
-    "Geometric",
-    "Normal",
-    "Poisson",
+    // "Bernoulli",
+    // "Binomial",
+    // "Gamma",
+    // "Geometric",
+    // "Normal",
+    // "Poisson",
     "Uniform",
-    "Uniform - Sorted",
+    // "Uniform - Sorted",
     "Uniform - Sorted & Reversed",
 });
 const vul SIZES({
-    100000,
-    1000000,
-    10000000,
-    100000000,
+    // 100000,
+    // 1000000,
+    // 10000000,
+    // 100000000,
     1000000000,
 });
 
@@ -143,4 +144,6 @@ void sedgewick86(vul &, ul);
 void shell(vul &, ul);
 void tokuda(vul &, ul);
 
+
+void logError(std::string);
 #endif /* core_hpp */
