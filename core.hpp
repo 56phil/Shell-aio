@@ -20,6 +20,7 @@
 #include <random>
 #include <set>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #define VALUE_ERROR 4
@@ -39,11 +40,28 @@ typedef std::vector<std::string> vs;
 
 using namespace std::chrono;
 
+void ciura(vul &, ul);
+void frank(vul &, ul);
+void gonnet(vul &, ul);
+void hibbard(vul &, ul);
+void knuth(vul &, ul);
+void papernov(vul &, ul);
+void phil(vul &, ul);
+void pratt(vul &, ul);
+void pratt_A(vul &, ul);
+void sedgewick1985(vul &, ul);
+void sedgewick82(vul &, ul);
+void sedgewick86(vul &, ul);
+void shell(vul &, ul);
+void tokuda(vul &, ul);
+
 int main(int, char **);
-std::string formatMicroSeconds(const ul, int, bool verbose = false,
-                               bool compresed = true);
-std::string formatTime(bool doDate = false, bool doTime = true);
+void formatMicroSeconds(std::string &, const ul, const int,
+                        const bool verbose = false,
+                        const bool compresed = true);
+void formatTime(std::string &, bool doDate = true, bool doTime = true);
 void init();
+void logError(std::string);
 void randomFill(ul, vi &, std::string);
 void sys(vul &, ul);
 
@@ -55,7 +73,7 @@ const int MAX_DistroLines(15);
 const int MAX_ERROR_LINES(15);
 const int MAX_Passes(3);
 const int MAX_Warnings(4);
-const int MEDIAN_TrialSize(1);
+const int MEDIAN_TrialSize(5);
 const int MICROSECOND_Length(13);
 const int iMax(std::numeric_limits<int>::max());
 const int iMin(std::numeric_limits<int>::min());
@@ -63,21 +81,20 @@ const std::string FN_Base("/Users/prh/Keepers/code/cpp/shellSort/results/");
 const ul MAX_SAMPLE_SIZE(1000000000);
 const ul MIN_SAMPLE_SIZE(100000);
 const vs DISTRO_NAMES({
-    // "Bernoulli",
-    // "Binomial",
-    // "Gamma",
-    // "Geometric",
-    // "Normal",
-    // "Poisson",
+    "Bernoulli",
+    "Binomial",
+    "Gamma",
+    "Geometric",
+    "Normal",
+    "Poisson",
     "Uniform",
-    // "Uniform - Sorted",
+    "Uniform - Sorted",
     "Uniform - Sorted & Reversed",
 });
 const vul SIZES({
-    // 100000,
-    // 1000000,
-    // 10000000,
-    // 100000000,
+    1000000,
+    10000000,
+    100000000,
     1000000000,
 });
 
@@ -128,22 +145,4 @@ struct distroStruct {
   m_ul_os originals;
 };
 typedef std::map<std::string, distroStruct> m_s_ds;
-
-void ciura(vul &, ul);
-void frank(vul &, ul);
-void gonnet(vul &, ul);
-void hibbard(vul &, ul);
-void knuth(vul &, ul);
-void papernov(vul &, ul);
-void phil(vul &, ul);
-void pratt(vul &, ul);
-void pratt_A(vul &, ul);
-void sedgewick1985(vul &, ul);
-void sedgewick82(vul &, ul);
-void sedgewick86(vul &, ul);
-void shell(vul &, ul);
-void tokuda(vul &, ul);
-
-
-void logError(std::string);
 #endif /* core_hpp */
