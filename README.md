@@ -1,6 +1,6 @@
 # Shell-aio
 
-Shell-aio is a C++ project that provides a shell program with various functionalities. It includes a variety of functions for sorting, calculating averages and medians, and formatting time.
+Shell-aio is a C++ project that provides a testing environment for evaluating various intervals in a shell sort. It includes a variety of functions for sorting, calculating averages and medians, and formatting time.
 
 ## Features
 
