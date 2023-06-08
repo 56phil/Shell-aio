@@ -1,8 +1,40 @@
-//
-//  core.cpp
-//
-//  Created by Phil Huffman on 12/21/21.
-//
+/*
+The `core.cpp` file in the Shell-aio repository is a part of a shell program
+written in C++. Here's a brief summary of its key functionalities:
+
+1. **Main Function**: The main function initializes the program and returns an
+OK status.
+
+2. **Median Function**: This is a template function that calculates and returns
+the median of a vector. It checks if the vector is empty and if the vector type
+is arithmetic. If these conditions are met, it sorts the vector and calculates
+the median.
+
+3. **Average Function**: This is another template function that calculates and
+returns the average of a vector. It also checks if the vector is empty and if
+the vector type is arithmetic.
+
+4. **ShellSort Function**: This function sorts a vector using Shell's method
+with a provided gap sequence.
+
+5. **LogError Function**: This function logs error messages.
+
+6. **GetGreatestLength Function**: This function returns the length of the
+longest string in a vector.
+
+7. **Trim Function**: This function trims leading and trailing spaces from a
+string.
+
+8. **ZeroOrMany Function**: This function returns an "s" if the input number is
+not 1, and an empty string otherwise. It's used for proper grammar in output
+messages.
+
+9. **FormatMicroSeconds Function**: This function formats microseconds into a
+more readable format. It can output in verbose or compressed format.
+
+Please note that this is a high-level summary. For a detailed understanding, you
+should review the code and comments in the `core.cpp` file. l
+*/
 
 #include "core.hpp"
 #include <iostream>
